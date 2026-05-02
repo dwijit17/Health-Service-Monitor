@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,status,HTTPException,Depends
 from db.queries import DBManager
 from db.models import Status,Url,User,HealthLog
 from contextlib import asynccontextmanager
+from sqlmodel import Session
 #FastApi is entry point class
 
 dbmanager = DBManager()
@@ -22,5 +23,17 @@ app = FastAPI(lifespan=lifespan)
 #root = get(root)
 #then it will call the root
 #that is what the decorator is
-async def root():
+def root():
     return {"Message":"Hello World"}
+
+
+#signup api endpoint
+@app.post("/signup")
+def signup(user: User,session:Session = Depends(dbmanager.get_session)):
+    #create the user here
+    try:
+        message = dbmanager.create_user(user,session)
+    except Exception as e:
+        print("Some Exception Occured in creating the User...",e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is issue in signup...")
+    return {"message":f"{message}"}
