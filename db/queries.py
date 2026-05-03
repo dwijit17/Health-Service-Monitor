@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel,create_engine,Session,select
-from db.models import Status,Url,User,HealthLog
-from usermodels.usermodel import *
+from db.models import Url,User,UserUrl,HealthLog
+from DTO.usermodel import *
+from DTO.urlmodel import *
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -47,6 +48,61 @@ class DBManager:
                 return "Invalid Username or Password"
             return "success"
         except Exception as e:
+            session.rollback()
             print("There is some exception occured in fetching the user",e)
-            raise e
+            raise
+    
+    def create_url(self,url:Url_DTO,session:Session):
+        #This will add the url in the Url table if url doesnt exist before
+        #considering the url endpoints are differnet even with same domain name with differnt endpoints
+        try:
+            #The stament to check URL exist in db
+            url_id = None
+            created = False
+            statement = select(Url).where(Url.url_link == str(url.url_link))
+            result = session.exec(statement).first()
+            if not result:
+            #Add the url
+            #if url doesnt exist here it will at to db
+                new_url = Url(url_link=str(url.url_link))
+                session.add(new_url)
+                session.commit()
+                session.refresh(new_url)
+                url_id = new_url.id
+                created = True
+            #if url already exist it will come here or when its created new it will come here
+            # result = session.exec(statement).first() 
+            #if url already exist get that url_id and link it with this particular user
+            #check before if that particular user has already added that url
+            if not created:
+                url_id = result.id
+            check_stmt = select(UserUrl).where(UserUrl.url_id == url_id,UserUrl.user_id==url.user_id)
+            check_result = session.exec(check_stmt).first()
+            if check_result:
+                return "url already added"
+            new_user_url = UserUrl(user_id = url.user_id ,url_id = url_id,url_name=url.url_name)
+            session.add(new_user_url)
+            session.commit()
+            session.refresh(new_user_url)
+            return "success"
+        except Exception as e:
+            session.rollback()
+            print("There is some error occured adding url into the database..",e)
+            raise
 
+    def get_url(self,user_id:int,session:Session):
+        #fix if the userid doesnt exist it is coming no urls added yet -- fix this thing
+        try:
+            statement = select(UserUrl,Url).where(UserUrl.user_id==user_id).join(Url,UserUrl.url_id==Url.id)
+            result = session.exec(statement)
+            rows = result.all()
+            if not rows:
+                return "No urls added yet"
+            data = []
+            for (urlname,urllink) in rows:
+                data.append({"url_id":urllink.id , "url_link" : urllink.url_link , "url_name" : urlname.url_name})
+            return data
+        except Exception as e:
+            session.rollback()
+            print("There is some error in fetching the urls ..",e)
+            raise

@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel,Field
+from sqlmodel import SQLModel,Field,Column,DateTime
 from datetime import datetime,timezone
 from sqlalchemy import UniqueConstraint
 from enum import Enum
@@ -15,7 +15,6 @@ class User(SQLModel,table=True):
 class Url(SQLModel,table=True):
     id : int | None = Field(default=None,primary_key=True)
     url_link : str = Field(unique=True,nullable=False)
-    url_name : str = Field(max_length=255)
     created_at : datetime = Field(default_factory=lambda : datetime.now(timezone.utc))
 
 class UserUrl(SQLModel,table=True):
@@ -23,11 +22,12 @@ class UserUrl(SQLModel,table=True):
     id : int | None = Field(default=None,primary_key=True)
     user_id : int = Field(foreign_key="user.id")
     url_id : int = Field(foreign_key="url.id")
-    added_at : datetime =  Field(default_factory=lambda :  datetime.now(timezone.utc))
+    url_name : str = Field(max_length=255,nullable=False)
+    added_at : datetime =  Field(default_factory=lambda :  datetime.now(timezone.utc),sa_column=Column(DateTime(timezone=True)))
 
 class HealthLog(SQLModel,table=True):
     id : int | None = Field(default=None,primary_key=True)
     url_id : int = Field(foreign_key="url.id")
     status : Status = Field(nullable=False)
     response_time_ms: int | None = None
-    checked_at : datetime = Field(default_factory=lambda :  datetime.now(timezone.utc))
+    checked_at : datetime = Field(default_factory=lambda :  datetime.now(timezone.utc),sa_column=Column(DateTime(timezone=True)))
