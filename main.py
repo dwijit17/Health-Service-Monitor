@@ -1,8 +1,8 @@
 from fastapi import FastAPI,status,HTTPException,Depends
 from db.queries import DBManager
-from db.models import Status,Url,User,HealthLog
 from contextlib import asynccontextmanager
 from sqlmodel import Session
+from usermodels.usermodel import User_DTO 
 #FastApi is entry point class
 
 dbmanager = DBManager()
@@ -29,11 +29,21 @@ def root():
 
 #signup api endpoint
 @app.post("/signup")
-def signup(user: User,session:Session = Depends(dbmanager.get_session)):
+def signup(user: User_DTO,session:Session = Depends(dbmanager.get_session)):
     #create the user here
     try:
         message = dbmanager.create_user(user,session)
     except Exception as e:
         print("Some Exception Occured in creating the User...",e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is issue in signup...")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in signup...")
     return {"message":f"{message}"}
+
+#signin api endpoint
+@app.post("/signin")
+def signin(user : User_DTO,session : Session = Depends(dbmanager.get_session)):
+    try:
+        message = dbmanager.get_user(user,session)
+    except Exception as e:
+        print("Some Exception Occured in Fetching the User Details...",e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in signin...")
+    return {"message" : f"{message}"}

@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel,create_engine,Session,select
 from db.models import Status,Url,User,HealthLog
+from usermodels.usermodel import *
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -21,20 +22,31 @@ class DBManager:
         with Session(self.engine) as session:
             yield session
     
-    def create_user(self,user:User,session:Session):
+    def create_user(self,user:User_DTO,session:Session):
         #need to check if the user existed before if not then only add it
         try:
             statement = select(User).where(User.email == user.email)
             result = session.exec(statement).first()
-            user_out = result.all() if result  else None
-            if user_out:
-                return {"message" : "User already Exist"}
-            session.add(user)
+            if result:
+                return "User already Exist"
+            new_user = User(email=user.email,password_hash=user.password)
+            session.add(new_user)
             session.commit()
-            session.refresh(user)
+            session.refresh(new_user)
             return "success"
         except Exception as e:
             session.rollback()
             print("Some Exception Occured in DB creating the User...",e)
-            return  "Internal Server Error"
-        
+            raise 
+
+    def get_user(self,user:User_DTO,session:Session):
+        try:
+            statement = select(User).where(User.email == user.email , User.password_hash == user.password)
+            result = session.exec(statement).first()
+            if not result:
+                return "Invalid Username or Password"
+            return "success"
+        except Exception as e:
+            print("There is some exception occured in fetching the user",e)
+            raise e
+

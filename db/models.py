@@ -9,7 +9,7 @@ class Status(str , Enum):
 
 class User(SQLModel,table=True):
     id : int | None = Field(default=None,primary_key=True)
-    email : str = Field(unique=True,regex=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",nullable=False)
+    email : str = Field(unique=True,nullable=False)
     password_hash : str
 
 class Url(SQLModel,table=True):
