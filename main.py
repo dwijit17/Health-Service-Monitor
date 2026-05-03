@@ -68,3 +68,13 @@ def get_url(user_id:int,session : Session = Depends(dbmanager.get_session)):
         print("Some Exception occured in fetching the url...",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in fetching the urls ...")
     return message
+
+#check the status of url and put it in the database
+@app.post("/check/{url_id}")
+def check_status_url(url_id:int ,session:Session = Depends(dbmanager.get_session)):
+    try:
+        message = dbmanager.check_and_updatestatusdb(url_id,session)
+    except Exception as e:
+        print("Some Exception occured in checking the url...",e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in updating the status of url ...")
+    return message
