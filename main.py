@@ -78,3 +78,13 @@ def check_status_url(url_id:int ,session:Session = Depends(dbmanager.get_session
         print("Some Exception occured in checking the url...",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in updating the status of url ...")
     return message
+
+#This will get the basic stats of the url data
+@app.get("/data/{url_id}")
+def get_data(url_id:int,session:Session = Depends(dbmanager.get_session)):
+    try:
+        message = dbmanager.geturlstats(url_id,session)
+    except Exception as e:
+        print("Some error occured in fetching the url stats data",e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in getting the stats of url ...")
+    return message

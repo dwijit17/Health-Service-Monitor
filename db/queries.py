@@ -1,5 +1,5 @@
-from sqlmodel import SQLModel,create_engine,Session,select
-from db.models import Url,User,UserUrl,HealthLog
+from sqlmodel import SQLModel,create_engine,Session,select,func
+from db.models import Url,User,UserUrl,HealthLog,Status
 from DTO.usermodel import *
 from DTO.urlmodel import *
 from dotenv import load_dotenv
@@ -123,7 +123,6 @@ class DBManager:
             link = result.url_link
             #call the check status function
             t0 = datetime.now(timezone.utc)
-            print(t0)
             response = check_status(link)
             #the above line here is a blocking call
             #update the result in the postgres db
@@ -136,4 +135,28 @@ class DBManager:
             session.rollback()
             print("There is some error in either fetching or updating the health data..",e)
             raise
+    
+    def geturlstats(self,url_id:int,session:Session):
+        try:
+            statement0 = select(HealthLog).where(HealthLog.url_id == url_id).order_by(HealthLog.checked_at.desc())
+            result = session.exec(statement0)
+            final_res =  result.all()
+            total_rows = len(final_res)
+            if total_rows==0: #I think both are same
+                return {"message":"No Data Exist Yet for the url_id"}
+            statement1 = select(func.count()).select_from(HealthLog).where(HealthLog.url_id == url_id,HealthLog.status == Status.up)
+            up_count = session.exec(statement1).one()
+            down_count = total_rows - up_count
+            recent = []
+            for data in final_res:
+                recent.append({"status":data.status,"response_time_ms":data.response_time_ms,"checked_at":data.checked_at})
+
+            response = {"url_id": url_id,"total_checks":total_rows,"up_count":up_count,"down_count":down_count,"recent":recent[:10]}
+            return response
+        except Exception as e:
+            session.rollback()
+            print("There is some error in either gettting the health data..",e)
+            raise
+
+                
 
