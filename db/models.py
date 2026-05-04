@@ -29,5 +29,5 @@ class HealthLog(SQLModel,table=True):
     id : int | None = Field(default=None,primary_key=True)
     url_id : int = Field(foreign_key="url.id")
     status : Status = Field(nullable=False)
-    response_time_ms: int | None = None
-    checked_at : datetime = Field(default_factory=lambda :  datetime.now(timezone.utc),sa_column=Column(DateTime(timezone=True)))
+    response_time_ms: float | None = None
+    checked_at : datetime = Field(sa_column=Column(DateTime(timezone=True)))

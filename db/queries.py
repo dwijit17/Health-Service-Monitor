@@ -4,6 +4,8 @@ from DTO.usermodel import *
 from DTO.urlmodel import *
 from dotenv import load_dotenv
 import os
+from url_scheduler.healthservice import check_status
+from datetime import datetime,timezone
 load_dotenv()
 class DBManager:
     def __init__(self):
@@ -106,3 +108,32 @@ class DBManager:
             session.rollback()
             print("There is some error in fetching the urls ..",e)
             raise
+
+    def check_and_updatestatusdb(self,url_id:int,session:Session):
+        #this function gets the url_id 
+        #it will get the acutal url from the url table
+        #and will call the checkstatus function 
+        #get the result and update that data in db and also send it as a response
+        try:
+            statement = select(Url).where(Url.id == url_id)
+            result = session.exec(statement).first()
+            if not result:
+                return "Invalid url_id"
+
+            link = result.url_link
+            #call the check status function
+            t0 = datetime.now(timezone.utc)
+            print(t0)
+            response = check_status(link)
+            #the above line here is a blocking call
+            #update the result in the postgres db
+            health_data = HealthLog(url_id=url_id,status=response[0],response_time_ms=response[1]*1000,checked_at=t0)
+            session.add(health_data)
+            session.commit()
+            session.refresh(health_data)
+            return {"url_id": url_id,"url_link":link,"response_time_ms":health_data.response_time_ms,"status":health_data.status,"checked_at":health_data.checked_at}
+        except Exception as e:
+            session.rollback()
+            print("There is some error in either fetching or updating the health data..",e)
+            raise
+

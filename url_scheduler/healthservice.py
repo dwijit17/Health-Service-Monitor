@@ -1,9 +1,9 @@
 import requests
 from db.models import Status
-URL = "https://example.com"
-def check_status():
+# URL = "https://example.com"
+def check_status(url:str):
     try:
-        response = requests.get(url=URL,timeout=10)
+        response = requests.get(url=url,timeout=10)
         if response.status_code >= 500:
             return (Status.down,None)
         else:
