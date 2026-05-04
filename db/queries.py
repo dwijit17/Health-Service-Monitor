@@ -158,5 +158,13 @@ class DBManager:
             print("There is some error in either gettting the health data..",e)
             raise
 
-                
-
+    def getallurlsids(self):
+        try:
+            s = self.get_session() 
+            session = next(s)
+            statement = select(Url.id).select_from(Url)
+            result = session.exec(statement).all()
+            return list(result)
+        except Exception as e:
+            print("There is some error in getting all the list of urls..",e)
+            raise

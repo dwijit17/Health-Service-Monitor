@@ -4,15 +4,21 @@ from contextlib import asynccontextmanager
 from sqlmodel import Session
 from DTO.usermodel import User_DTO
 from DTO.urlmodel import Url_DTO
+from url_scheduler.scheduler import scheduler_data
+import threading
 #FastApi is entry point class
 
 dbmanager = DBManager()
 #on startup create the tables if not exist
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     dbmanager.create_db_tables()
+    t = threading.Thread(target=scheduler_data,daemon=True)
+    t.start()
     yield
     print("App shutting down")
+
 
 app = FastAPI(lifespan=lifespan) 
 #Here we are making an app obj for the FastApi clls
