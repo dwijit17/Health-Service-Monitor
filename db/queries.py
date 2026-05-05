@@ -126,7 +126,8 @@ class DBManager:
             response = check_status(link)
             #the above line here is a blocking call
             #update the result in the postgres db
-            health_data = HealthLog(url_id=url_id,status=response[0],response_time_ms=response[1]*1000,checked_at=t0)
+            rms = response[1]*1000 if response[1] else None
+            health_data = HealthLog(url_id=url_id,status=response[0],response_time_ms=rms,checked_at=t0)
             session.add(health_data)
             session.commit()
             session.refresh(health_data)
@@ -158,10 +159,10 @@ class DBManager:
             print("There is some error in either gettting the health data..",e)
             raise
 
-    def getallurlsids(self):
+    def getallurlsids(self,session:Session):
         try:
-            s = self.get_session() 
-            session = next(s)
+            # s = self.get_session() 
+            # session = next(s)
             statement = select(Url.id).select_from(Url)
             result = session.exec(statement).all()
             return list(result)
