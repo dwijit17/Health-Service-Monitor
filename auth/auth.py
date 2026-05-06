@@ -9,8 +9,19 @@ class Auth:
         pass
 
     def generate_jwt(self,payload):
-        token = jwt.encode(payload,SECRET_KEY,algorithm="HS256")
-        return token
-    
+        try:
+            token = jwt.encode(payload,SECRET_KEY,algorithm="HS256")
+            return token
+        except Exception as e:
+            print("There was some error in generating the jwt token")
+            raise
+
     def verify_jwt(self,token):
-        payload = jwt.decode(token,SECRET_KEY,algorithms=["HS256"])
+        try:
+            payload = jwt.decode(token,SECRET_KEY,algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            print("Token Expired..")
+            raise
+        except jwt.InvalidTokenError:
+            print("Access Denied token tampered or Invalid...")
+            raise

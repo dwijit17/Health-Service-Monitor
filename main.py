@@ -1,10 +1,12 @@
-from fastapi import FastAPI,status,HTTPException,Depends
+from fastapi import FastAPI,status,HTTPException,Depends,Header
 from db.queries import DBManager
 from contextlib import asynccontextmanager
 from sqlmodel import Session
 from DTO.usermodel import User_DTO
 from DTO.urlmodel import Url_DTO
 from url_scheduler.scheduler import scheduler_data
+from auth.auth import Auth
+from datetime import datetime,timezone,timedelta
 import threading
 #FastApi is entry point class
 
@@ -50,15 +52,22 @@ def signup(user: User_DTO,session:Session = Depends(dbmanager.get_session)):
 def signin(user : User_DTO,session : Session = Depends(dbmanager.get_session)):
     try:
         message = dbmanager.get_user(user,session)
+        if message["message"]:
+            payload = {"user_id":message["user_id"],"exp":datetime.now(timezone.utc) + timedelta(hours=1)}
+            authobj = Auth()
+            token = authobj.generate_jwt(payload)
+            return {"token" : token}
     except Exception as e:
         print("Some Exception Occured in Fetching the User Details...",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in signin...")
-    return {"message" : message}
+    return {"message" : "Invalid user"}
 
 #post urls 
 @app.post("/urls")
-def add_url(url:Url_DTO,session : Session = Depends(dbmanager.get_session)):
+def add_url(url:Url_DTO,session : Session = Depends(dbmanager.get_session),authorization: str = Header(None)):
     try:
+        #now here the urlid wont be passed from the body its read from the authorization header
+        #and passed here for the function
         message = dbmanager.create_url(url,session)
     except Exception as e:
         print("Some Exception occured in adding the url...",e)

@@ -47,8 +47,10 @@ class DBManager:
             statement = select(User).where(User.email == user.email , User.password_hash == user.password)
             result = session.exec(statement).first()
             if not result:
-                return "Invalid Username or Password"
-            return "success"
+                return {"message": False, "user_id":None}
+            #here success mean we need to send the token
+            #get the userid for this user
+            return {"message" : True , "user_id" : result.id}
         except Exception as e:
             session.rollback()
             print("There is some exception occured in fetching the user",e)
