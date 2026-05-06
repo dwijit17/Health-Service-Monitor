@@ -11,6 +11,7 @@ import threading
 #FastApi is entry point class
 
 dbmanager = DBManager()
+authobj = Auth()
 #on startup create the tables if not exist
 
 @asynccontextmanager
@@ -54,7 +55,6 @@ def signin(user : User_DTO,session : Session = Depends(dbmanager.get_session)):
         message = dbmanager.get_user(user,session)
         if message["message"]:
             payload = {"user_id":message["user_id"],"exp":datetime.now(timezone.utc) + timedelta(hours=1)}
-            authobj = Auth()
             token = authobj.generate_jwt(payload)
             return {"token" : token}
     except Exception as e:
@@ -68,7 +68,9 @@ def add_url(url:Url_DTO,session : Session = Depends(dbmanager.get_session),autho
     try:
         #now here the urlid wont be passed from the body its read from the authorization header
         #and passed here for the function
-        message = dbmanager.create_url(url,session)
+        # print("The authoriztion is " ,authorization)
+        user_id = authobj.get_userid(authorization)
+        message = dbmanager.create_url(url,session,user_id)
     except Exception as e:
         print("Some Exception occured in adding the url...",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in adding the url ...")
@@ -76,8 +78,9 @@ def add_url(url:Url_DTO,session : Session = Depends(dbmanager.get_session),autho
 
 #get urls
 @app.get("/urls")
-def get_url(user_id:int,session : Session = Depends(dbmanager.get_session)):
+def get_url(session : Session = Depends(dbmanager.get_session),authorization: str = Header(None)):
     try:
+        user_id = authobj.get_userid(authorization)
         message = dbmanager.get_url(user_id,session)
     except Exception as e:
         print("Some Exception occured in fetching the url...",e)

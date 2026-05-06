@@ -56,7 +56,7 @@ class DBManager:
             print("There is some exception occured in fetching the user",e)
             raise
     
-    def create_url(self,url:Url_DTO,session:Session):
+    def create_url(self,url:Url_DTO,session:Session,user_id:int):
         #This will add the url in the Url table if url doesnt exist before
         #considering the url endpoints are differnet even with same domain name with differnt endpoints
         try:
@@ -80,11 +80,11 @@ class DBManager:
             #check before if that particular user has already added that url
             if not created:
                 url_id = result.id
-            check_stmt = select(UserUrl).where(UserUrl.url_id == url_id,UserUrl.user_id==url.user_id)
+            check_stmt = select(UserUrl).where(UserUrl.url_id == url_id,UserUrl.user_id==user_id)
             check_result = session.exec(check_stmt).first()
             if check_result:
                 return "url already added"
-            new_user_url = UserUrl(user_id = url.user_id ,url_id = url_id,url_name=url.url_name)
+            new_user_url = UserUrl(user_id = user_id ,url_id = url_id,url_name=url.url_name)
             session.add(new_user_url)
             session.commit()
             session.refresh(new_user_url)
