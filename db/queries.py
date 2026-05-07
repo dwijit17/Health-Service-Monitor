@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 import os
 from url_scheduler.healthservice import check_status
 from datetime import datetime,timezone
+from auth.auth import Auth
 load_dotenv()
+authobj = Auth()
 class DBManager:
     def __init__(self):
         #get the connection here
@@ -32,7 +34,9 @@ class DBManager:
             result = session.exec(statement).first()
             if result:
                 return "User already Exist"
-            new_user = User(email=user.email,password_hash=user.password)
+            #stored hashed password
+            hashed_pwd = authobj.hash_password(user.password)
+            new_user = User(email=user.email,password_hash=hashed_pwd)
             session.add(new_user)
             session.commit()
             session.refresh(new_user)
@@ -44,13 +48,16 @@ class DBManager:
 
     def get_user(self,user:User_DTO,session:Session):
         try:
-            statement = select(User).where(User.email == user.email , User.password_hash == user.password)
+            statement = select(User).where(User.email == user.email)
             result = session.exec(statement).first()
             if not result:
                 return {"message": False, "user_id":None}
             #here success mean we need to send the token
             #get the userid for this user
-            return {"message" : True , "user_id" : result.id}
+            verification = authobj.verify_password(user.password,result.password_hash)
+            if verification:
+                return {"message" : True , "user_id" : result.id}
+            return {"message": False, "user_id":None}
         except Exception as e:
             session.rollback()
             print("There is some exception occured in fetching the user",e)
