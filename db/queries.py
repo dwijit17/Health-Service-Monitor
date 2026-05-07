@@ -21,7 +21,7 @@ class DBManager:
         )
         else:
             self.url_db = os.getenv("POSTGRES_URL")
-        print("**************",self.url_db)
+       
         self.engine = None
         # print(self.url_db)
         try:
