@@ -28,11 +28,16 @@ d = {
     "https://catfact.ninja/fact"
   ]
 }
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NzgxNjk0NTl9.iKVQ7TTeLsxXYrxAEZmK1dNdcT_TexBKtGzhGhTygr4"
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Content-Type": "application/json"
+}
 for url in d["test_urls"]:
     data = {
     "url_link": url,
     "url_name": "string",
     "user_id": 1
     }
-    requests.post(url="http://localhost:8000/urls",json=data)
+    requests.post(url="http://localhost:8000/urls",json=data,headers=headers)
 print("Done")
