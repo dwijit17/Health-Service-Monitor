@@ -31,7 +31,10 @@ class Auth:
             raise
     
     def get_userid(self,authorization:str):
-        token = authorization.split(" ")[1]
-        payload = self.verify_jwt(token)
-        user_id = payload["user_id"]
-        return user_id
+        try:
+            token = authorization.split(" ")[1]
+            payload = self.verify_jwt(token)
+            user_id = payload["user_id"]
+            return user_id
+        except Exception as e:
+            raise

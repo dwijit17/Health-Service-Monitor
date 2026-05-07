@@ -89,9 +89,15 @@ def get_url(session : Session = Depends(dbmanager.get_session),authorization: st
 
 #check the status of url and put it in the database
 @app.post("/check/{url_id}")
-def check_status_url(url_id:int ,session:Session = Depends(dbmanager.get_session)):
+def check_status_url(url_id:int ,session:Session = Depends(dbmanager.get_session),authorization: str = Header(None)):
     try:
+        user_id = authobj.get_userid(authorization)
+        val = dbmanager.check_ownership(session,user_id,url_id)
+        if not val["message"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail=val)
         message = dbmanager.check_and_updatestatusdb(url_id,session)
+    except HTTPException:
+        raise
     except Exception as e:
         print("Some Exception occured in checking the url...",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in updating the status of url ...")
@@ -99,9 +105,15 @@ def check_status_url(url_id:int ,session:Session = Depends(dbmanager.get_session
 
 #This will get the basic stats of the url data
 @app.get("/data/{url_id}")
-def get_data(url_id:int,session:Session = Depends(dbmanager.get_session)):
+def get_data(url_id:int,session:Session = Depends(dbmanager.get_session),authorization: str = Header(None)):
     try:
+        user_id = authobj.get_userid(authorization)
+        val = dbmanager.check_ownership(session,user_id,url_id)
+        if not val["message"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail=val)
         message = dbmanager.geturlstats(url_id,session)
+    except HTTPException:
+        raise
     except Exception as e:
         print("Some error occured in fetching the url stats data",e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="There is an issue in getting the stats of url ...")

@@ -120,8 +120,7 @@ class DBManager:
             statement = select(Url).where(Url.id == url_id)
             result = session.exec(statement).first()
             if not result:
-                return "Invalid url_id"
-
+                return {"message":False,"detail":"Invalid url id"}
             link = result.url_link
             #call the check status function
             t0 = datetime.now(timezone.utc)
@@ -133,7 +132,7 @@ class DBManager:
             session.add(health_data)
             session.commit()
             session.refresh(health_data)
-            return {"url_id": url_id,"url_link":link,"response_time_ms":health_data.response_time_ms,"status":health_data.status,"checked_at":health_data.checked_at}
+            return {"message":True,"url_id": url_id,"url_link":link,"response_time_ms":health_data.response_time_ms,"status":health_data.status,"checked_at":health_data.checked_at}
         except Exception as e:
             session.rollback()
             print("There is some error in either fetching or updating the health data..",e)
@@ -171,3 +170,16 @@ class DBManager:
         except Exception as e:
             print("There is some error in getting all the list of urls..",e)
             raise
+    
+    def check_ownership(self,session:Session,user_id:int | None, url_id : int):
+        try:
+            #check if the user_id really be access to this url_id
+            statement1 = select(UserUrl).where(UserUrl.user_id == user_id , UserUrl.url_id == url_id)
+            result1 = session.exec(statement1).first()
+            if not result1:
+                return {"message":False,"detail":"unauthorized"}
+            return {"message":True,"detail":"authorized"}
+        except Exception as e:
+            print("There is some error in checking the ownership.",e)
+            raise
+
