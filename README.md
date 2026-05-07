@@ -177,6 +177,7 @@ SECRET_KEY=your_secret_key
 POSTGRES_USER=your_postgres_user
 POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=your_database_name
+PROD=False
 ```
 
 ---
@@ -198,7 +199,7 @@ docker run -d \
 -p 8100:5432 \
 --env-file .env \
 -v postgres_data:/var/lib/postgresql \
-postgres:16
+postgres:18.3
 ```
 
 ## Build FastAPI Container
